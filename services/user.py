@@ -5,7 +5,6 @@ from django.contrib.auth.models import User
 
 
 def get_user(user_id: int) -> User:
-    user = get_user_model()
     try:
         return User.objects.get(id=user_id)
     except User.DoesNotExist:
@@ -19,7 +18,6 @@ def create_user(
         first_name: Optional[str] = None,
         last_name: Optional[str] = None
 ) -> User:
-    user = get_user_model()
 
     user_data = {
         "username": username,
