@@ -1,10 +1,11 @@
 from typing import Optional
 from django.contrib.auth import get_user_model
 from django.http import Http404
+from django.contrib.auth.models import User
 
 
-def get_user(user_id: int):
-    User = get_user_model()
+def get_user(user_id: int) -> User:
+    user = get_user_model()
     try:
         return User.objects.get(id=user_id)
     except User.DoesNotExist:
@@ -17,8 +18,8 @@ def create_user(
         email: Optional[str] = None,
         first_name: Optional[str] = None,
         last_name: Optional[str] = None
-):
-    User = get_user_model()
+) -> User:
+    user = get_user_model()
 
     user_data = {
         "username": username,
@@ -40,7 +41,7 @@ def update_user(
         password: Optional[str] = None,
         first_name: Optional[str] = None,
         last_name: Optional[str] = None,
-):
+) -> User:
     user = get_user(user_id)
 
     if email is not None:

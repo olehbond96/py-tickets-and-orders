@@ -2,7 +2,7 @@ from typing import List, Dict, Any, Optional
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from .user import get_user
-from db.models import User, Order, Ticket, MovieSession
+from db.models import Order, Ticket, MovieSession
 
 
 @transaction.atomic
