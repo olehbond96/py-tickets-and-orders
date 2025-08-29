@@ -3,6 +3,7 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404
 from .user import get_user
 from db.models import Order, Ticket, MovieSession
+from django.db.models import QuerySet
 
 
 @transaction.atomic
@@ -12,7 +13,6 @@ def create_order(
     date: Optional[str] = None
 ) -> Order:
     user = get_user(username)
-
     order_data = {"user": user}
     if date:
         order_data["created_at"] = date
@@ -33,11 +33,9 @@ def create_order(
     return order
 
 
-def get_orders(username: Optional[str] = None) -> List[Order]:
+def get_orders(username: Optional[str] = None) -> QuerySet[Order]:
     orders = Order.objects.all()
-
     if username:
         user = get_user(username)
         orders = orders.filter(user=user)
-
-    return list(orders)
+    return orders

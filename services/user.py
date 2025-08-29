@@ -1,13 +1,12 @@
 from typing import Optional
-from django.http import Http404
-from django.contrib.auth.models import User
+from django.db import transaction
+from django.contrib.auth import get_user_model
+from django.shortcuts import get_object_or_404
 
 
-def get_user(user_id: int) -> User:
-    try:
-        return User.objects.get(id=user_id)
-    except User.DoesNotExist:
-        raise Http404("User not found")
+def get_user(user_id: int) -> get_user_model():
+    User = get_user_model()
+    return get_object_or_404(User, id=user_id)
 
 
 def create_user(
@@ -16,29 +15,31 @@ def create_user(
         email: Optional[str] = None,
         first_name: Optional[str] = None,
         last_name: Optional[str] = None
-) -> User:
+) -> get_user_model():
+    User = get_user_model()
+    optional_fields = {}
+    if email:
+        optional_fields['email'] = email
+    if first_name:
+        optional_fields['first_name'] = first_name
+    if last_name:
+        optional_fields['last_name'] = last_name
 
-    user_data = {
-        "username": username,
-        "password": password
-    }
-    if email is not None:
-        user_data["email"] = email
-    if first_name is not None:
-        user_data["first_name"] = first_name
-    if last_name is not None:
-        user_data["last_name"] = last_name
-
-    return User.objects.create_user(**user_data)
+    return User.objects.create_user(
+        username=username,
+        password=password,
+        **optional_fields
+    )
 
 
+@transaction.atomic
 def update_user(
         user_id: int,
         email: Optional[str] = None,
         password: Optional[str] = None,
         first_name: Optional[str] = None,
         last_name: Optional[str] = None,
-) -> User:
+) -> get_user_model():
     user = get_user(user_id)
 
     if email is not None:
