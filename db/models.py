@@ -1,5 +1,5 @@
-from django.core.exceptions import ValidationError
 from django.db import models
+from django.core.exceptions import ValidationError
 from django.db.models import UniqueConstraint
 from django.contrib.auth.models import AbstractUser
 
@@ -26,9 +26,9 @@ class Movie(models.Model):
     genres = models.ManyToManyField(to=Genre, related_name="movies")
 
     class Meta:
-        indexes = [
-            models.Index(fields=["title"]),
-        ]
+
+       indexes = [
+           models.Index(fields=["title"]),]
 
     def __str__(self) -> str:
         return self.title
@@ -67,18 +67,14 @@ class User(AbstractUser):
 class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(
-        # Використовуємо рядок для посилання на модель User,
-        # оскільки вона вже визначена вище
         to="User",
         on_delete=models.CASCADE,
         related_name="orders"
     )
-
     class Meta:
         ordering = ["-created_at"]
-
     def __str__(self) -> str:
-        return f"Order: {self.created_at.strftime('%Y-%m-%d %H:%M:%S')}"
+        return f"<Order: {self.created_at.strftime('%Y-%m-%d %H:%M:%S')}>"
 
 
 class Ticket(models.Model):
@@ -104,24 +100,25 @@ class Ticket(models.Model):
         ]
 
     def __str__(self) -> str:
-        return (
-            f"Ticket: {self.movie_session.movie.title} "
-            f"{self.movie_session.show_time.strftime('%Y-%m-%d %H:%M:%S')}"
-            f" (row: {self.row}, seat: {self.seat})"
-        )
+        return (f"<Ticket:"
+                f" {self.movie_session.movie.title} "
+                f"{self.movie_session.show_time.strftime('%Y-%m-%d %H:%M:%S')}"
+                f" (row: {self.row},"
+                f" seat: {self.seat})>"
+                )
 
     def clean(self) -> None:
         cinema_hall = self.movie_session.cinema_hall
         if self.row <= 0 or self.row > cinema_hall.rows:
-            raise ValidationError({
-                "row": f"row number must be in available range: "
-                f"(1, rows): (1, {cinema_hall.rows})"
-            })
+            raise ValidationError({"row": f"row number must be in available range:"
+                                          f" (1, rows): (1, {cinema_hall.rows})"}
+            )
         if self.seat <= 0 or self.seat > cinema_hall.seats_in_row:
-            raise ValidationError({
-                "seat": f"seat number must be in available range: "
-                f"(1, seats_in_row): (1, {cinema_hall.seats_in_row})"
-            })
+            raise ValidationError(
+                {"seat": f"seat number must be in available range:"
+                         f" (1, seats_in_row):"
+                         f" (1, {cinema_hall.seats_in_row})"}
+            )
 
     def save(self, *args, **kwargs) -> None:
         self.full_clean()

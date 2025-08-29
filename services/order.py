@@ -11,7 +11,7 @@ def create_order(
     username: str,
     date: Optional[str] = None
 ) -> Order:
-    user = get_object_or_404(User, username=username)
+    user = get_user(username)
 
     order_data = {"user": user}
     if date:
@@ -35,7 +35,9 @@ def create_order(
 
 def get_orders(username: Optional[str] = None) -> List[Order]:
     orders = Order.objects.all()
+
     if username:
         user = get_user(username)
         orders = orders.filter(user=user)
+
     return list(orders)
