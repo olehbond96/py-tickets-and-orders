@@ -1,33 +1,30 @@
-from django.db.models import QuerySet
-from db.models import Movie
-from django.db import transaction
+from datetime import date
+from django.db.models.query import QuerySet
+from db.models import MovieSession
 
 
-def get_movies(title: str = None) -> QuerySet:
-    queryset = Movie.objects.all()
-    if title:
-        queryset = queryset.filter(title__icontains=title)
-    return queryset
+def get_movie_sessions(
+    date: date = None,
+    movie_id: int = None,
+    cinema_hall_id: int = None,
+) -> QuerySet[MovieSession]:
+    queryset = MovieSession.objects.all()
+
+    if date:
+        queryset = queryset.filter(show_time__date=date)
+    if movie_id:
+        queryset = queryset.filter(movie_id=movie_id)
+    if cinema_hall_id:
+        queryset = queryset.filter(cinema_hall_id=cinema_hall_id)
+
+    return queryset.order_by("show_time")
 
 
-def get_movie_by_id(movie_id: int) -> Movie:
-    return Movie.objects.get(id=movie_id)
-
-
-@transaction.atomic
-def create_movie(
-    movie_title: str,
-    movie_description: str,
-    genres_ids: list = None,
-    actors_ids: list = None,
-) -> Movie:
-    movie = Movie.objects.create(
-        title=movie_title,
-        description=movie_description,
+def create_movie_session(
+    show_time: str, movie_id: int, cinema_hall_id: int
+) -> MovieSession:
+    return MovieSession.objects.create(
+        show_time=show_time,
+        movie_id=movie_id,
+        cinema_hall_id=cinema_hall_id,
     )
-    if genres_ids:
-        movie.genres.set(genres_ids)
-    if actors_ids:
-        movie.actors.set(actors_ids)
-
-    return movie

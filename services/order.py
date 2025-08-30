@@ -1,32 +1,40 @@
+from django.db.models.query import QuerySet
 from datetime import datetime
-from typing import List
-from django.db import transaction
-from django.db.models import QuerySet
-from db.models import Order, Ticket
-from services.user import get_user
+from db.models import Order, Ticket, MovieSession, User
 
 
-def get_orders(user_id: int) -> QuerySet[Order]:
-    return Order.objects.filter(user_id=user_id).order_by("-order_date")
+def get_orders(user_id: int = None, username: str = None) -> QuerySet[Order]:
+    queryset = Order.objects.all()
+
+    if user_id:
+        queryset = queryset.filter(user_id=user_id)
+    elif username:
+        queryset = queryset.filter(user__username=username)
+
+    return queryset.order_by("-created_at")
 
 
-@transaction.atomic
-def create_order(user_id: int, ticket_ids: List[int]) -> Order:
-    user = get_user(user_id)
-    tickets = Ticket.objects.filter(id__in=ticket_ids).select_related(
-        "movie_session"
-    )
+def create_order(
+    tickets: list,
+    username: str,
+    date: str = None,
+) -> Order:
 
-    if tickets.count() != len(ticket_ids):
-        raise ValueError("Some tickets were not found.")
+    user = User.objects.get(username=username)
 
-    for ticket in tickets:
-        if ticket.order:
-            raise ValueError(f"Ticket {ticket.id} is already ordered.")
+    if date:
+        order_date = datetime.strptime(date, "%Y-%m-%d %H:%M")
+    else:
+        order_date = datetime.now()
 
-    order = Order.objects.create(user=user, order_date=datetime.now())
+    order = Order.objects.create(user=user, created_at=order_date)
 
-    for ticket in tickets:
-        ticket.order = order
-        ticket.save()
+    for ticket_data in tickets:
+        movie_session = MovieSession.objects.get(id=ticket_data["movie_session"])
+        Ticket.objects.create(
+            movie_session=movie_session,
+            order=order,
+            row=ticket_data["row"],
+            seat=ticket_data["seat"],
+        )
     return order
