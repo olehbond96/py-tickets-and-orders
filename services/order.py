@@ -2,7 +2,6 @@ from datetime import datetime
 from typing import List
 from django.db import transaction
 from django.db.models import QuerySet
-
 from db.models import Order, Ticket
 from services.user import get_user
 from services.movie_session import get_movie_session
@@ -33,5 +32,5 @@ def create_order(user_id: int, ticket_ids: List[int]) -> Order:
         ticket.order = order
         ticket.save()
     return order
-    def olehtest(order) -> None:
+
 

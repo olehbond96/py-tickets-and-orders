@@ -1,5 +1,9 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser, PermissionsMixin, Group, Permission
+from django.contrib.auth.models import (AbstractUser,
+                                        PermissionsMixin,
+                                        Group,
+                                        Permission
+                                        )
 from django.core.exceptions import ValidationError
 
 
@@ -12,8 +16,12 @@ class User(AbstractUser, PermissionsMixin):
         Group,
         related_name="db_users",
         blank=True,
-        help_text="The groups this user belongs to. A user will get all permissions granted to each of their groups.",
+        help_text=(
+            "The groups this user belongs to. "
+            "A user will get all permissions granted to each of their groups."
+        ),
     )
+
     user_permissions = models.ManyToManyField(
         Permission,
         related_name="db_users_permissions",
@@ -71,15 +79,27 @@ class CinemaHall(models.Model):
 
 class MovieSession(models.Model):
     show_time = models.DateTimeField()
-    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name="sessions")
-    cinema_hall = models.ForeignKey(CinemaHall, on_delete=models.CASCADE, related_name="sessions")
+    movie = models.ForeignKey(
+        Movie,
+        on_delete=models.CASCADE,
+        related_name="sessions",
+    )
+    cinema_hall = models.ForeignKey(
+        CinemaHall,
+        on_delete=models.CASCADE,
+        related_name="sessions",
+    )
 
     def __str__(self):
         return f"{self.movie.title} at {self.show_time}"
 
 
 class Order(models.Model):
-    user = models.ForeignKey("User", on_delete=models.CASCADE, related_name="orders")
+    user = models.ForeignKey(
+        "User",
+        on_delete=models.CASCADE,
+        related_name="orders",
+    )
     order_date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -92,7 +112,11 @@ class Ticket(models.Model):
     movie_session = models.ForeignKey(
         "MovieSession", on_delete=models.CASCADE, related_name="tickets"
     )
-    order = models.ForeignKey("Order", on_delete=models.CASCADE, related_name="tickets")
+    order = models.ForeignKey(
+        "Order",
+        on_delete=models.CASCADE,
+        related_name="tickets",
+    )
 
     class Meta:
         constraints = [
@@ -105,7 +129,8 @@ class Ticket(models.Model):
     def __str__(self):
         return (
             f"<Ticket: {self.movie_session.movie.title} "
-            f"{self.movie_session.show_time} (row: {self.row}, seat: {self.seat})>"
+            f"{self.movie_session.show_time} "
+            f"(row: {self.row}, seat: {self.seat})>"
         )
 
     def clean(self):
