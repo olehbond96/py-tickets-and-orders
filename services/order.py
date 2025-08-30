@@ -14,7 +14,12 @@ def get_orders(username: str = None) -> QuerySet[Order]:
 
 
 @transaction.atomic
-def create_order(tickets: List[dict], username: str, date: Optional[str] = None) -> Order:
+def create_order(
+    tickets: List[dict],
+    username: str,
+    date: Optional[str] = None,
+) -> Order:
+    ...
     user = get_user_by_username(username)
     if date:
         created_at = datetime.fromisoformat(date)
