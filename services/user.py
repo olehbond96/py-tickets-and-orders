@@ -28,5 +28,13 @@ def update_user(user_id: int, **kwargs) -> User:
     return user
 
 
-def get_user() -> QuerySet[User]:
+def get_users() -> QuerySet[User]:
     return User.objects.all().order_by("username")
+
+
+def get_user(user_id: int) -> User:
+    return User.objects.get(id=user_id)
+
+
+def get_user_by_username(username: str) -> User:
+    return User.objects.get(username=username)
