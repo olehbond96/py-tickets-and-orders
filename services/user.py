@@ -28,5 +28,5 @@ def update_user(user_id: int, **kwargs) -> User:
     return user
 
 
-def get_users() -> QuerySet[User]:
+def get_user() -> QuerySet[User]:
     return User.objects.all().order_by("username")
