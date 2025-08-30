@@ -10,3 +10,6 @@ venv
 .venv
 .venv_new
 tests
+pip
+pycache
+
