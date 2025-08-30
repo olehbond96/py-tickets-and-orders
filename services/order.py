@@ -33,3 +33,5 @@ def create_order(user_id: int, ticket_ids: List[int]) -> Order:
         ticket.order = order
         ticket.save()
     return order
+    def olehtest(order) -> None:
+
