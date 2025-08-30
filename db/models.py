@@ -1,126 +1,128 @@
 from django.db import models
+from django.contrib.auth.models import AbstractUser, PermissionsMixin, Group, Permission
+from django.db.models import F
 from django.core.exceptions import ValidationError
-from django.db.models import UniqueConstraint
-from django.contrib.auth.models import AbstractUser
+from django.db.transaction import atomic
 
 
-class Genre(models.Model):
-    name = models.CharField(max_length=255, unique=True)
+class User(AbstractUser, PermissionsMixin):
+    date_of_birth = models.DateField(null=True)
+    is_staff = models.BooleanField(default=False)
+    is_superuser = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+    groups = models.ManyToManyField(
+        Group,
+        related_name="db_users",
+        blank=True,
+        help_text="The groups this user belongs to. A user will get all permissions granted to each of their groups.",
+    )
+    user_permissions = models.ManyToManyField(
+        Permission,
+        related_name="db_users_permissions",
+        blank=True,
+        help_text="Specific permissions for this user.",
+    )
 
-    def __str__(self) -> str:
-        return self.name
-
-
-class Actor(models.Model):
-    first_name = models.CharField(max_length=255)
-    last_name = models.CharField(max_length=255)
-
-    def __str__(self) -> str:
-        return f"{self.first_name} {self.last_name}"
+    def __str__(self):
+        return self.username
 
 
 class Movie(models.Model):
-    title = models.CharField(max_length=255)
+    title = models.CharField(max_length=255, unique=True)
     description = models.TextField()
-    actors = models.ManyToManyField(to=Actor, related_name="movies")
-    genres = models.ManyToManyField(to=Genre, related_name="movies")
+    actors = models.ManyToManyField("Actor", related_name="movies")
+    genres = models.ManyToManyField("Genre", related_name="movies")
+    release_date = models.DateField(auto_now_add=True)
 
     class Meta:
         indexes = [
             models.Index(fields=["title"]),
         ]
 
-    def __str__(self) -> str:
+    def __str__(self):
         return self.title
 
 
+class Actor(models.Model):
+    first_name = models.CharField(max_length=255)
+    last_name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return f"{self.first_name} {self.last_name}"
+
+
+class Genre(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+
+    def __str__(self):
+        return self.name
+
+
 class CinemaHall(models.Model):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)
     rows = models.IntegerField()
     seats_in_row = models.IntegerField()
+
+    def __str__(self):
+        return self.name
 
     @property
     def capacity(self) -> int:
         return self.rows * self.seats_in_row
 
-    def __str__(self) -> str:
-        return self.name
-
 
 class MovieSession(models.Model):
     show_time = models.DateTimeField()
-    cinema_hall = models.ForeignKey(
-        to=CinemaHall, on_delete=models.CASCADE, related_name="movie_sessions"
-    )
-    movie = models.ForeignKey(
-        to=Movie, on_delete=models.CASCADE, related_name="movie_sessions"
-    )
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name="sessions")
+    cinema_hall = models.ForeignKey(CinemaHall, on_delete=models.CASCADE, related_name="sessions")
 
-    def __str__(self) -> str:
-        return f"{self.movie.title} {str(self.show_time)}"
-
-
-class User(AbstractUser):
-    pass
+    def __str__(self):
+        return f"{self.movie.title} at {self.show_time}"
 
 
 class Order(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    user = models.ForeignKey(
-        to="User",
-        on_delete=models.CASCADE,
-        related_name="orders"
-    )
+    user = models.ForeignKey("User", on_delete=models.CASCADE, related_name="orders")
+    order_date = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
-        ordering = ["-created_at"]
-
-    def __str__(self) -> str:
-        return f"<Order: {self.created_at.strftime('%Y-%m-%d %H:%M:%S')}>"
+    def __str__(self):
+        return f"<Order: {self.order_date.strftime('%Y-%m-%d %H:%M:%S')}>"
 
 
 class Ticket(models.Model):
-    movie_session = models.ForeignKey(
-        to="MovieSession",
-        on_delete=models.CASCADE,
-        related_name="tickets"
-    )
-    order = models.ForeignKey(
-        to="Order",
-        on_delete=models.CASCADE,
-        related_name="tickets"
-    )
     row = models.IntegerField()
     seat = models.IntegerField()
+    movie_session = models.ForeignKey(
+        "MovieSession", on_delete=models.CASCADE, related_name="tickets"
+    )
+    order = models.ForeignKey("Order", on_delete=models.CASCADE, related_name="tickets")
 
     class Meta:
         constraints = [
-            UniqueConstraint(
+            models.UniqueConstraint(
                 fields=["movie_session", "row", "seat"],
-                name="unique_seat_per_session"
+                name="unique_ticket_movie_session_row_seat",
             )
         ]
 
-    def __str__(self) -> str:
+    def __str__(self):
         return (
             f"<Ticket: {self.movie_session.movie.title} "
-            f"{self.movie_session.show_time.strftime('%Y-%m-%d %H:%M:%S')} "
-            f"(row: {self.row}, seat: {self.seat})>"
+            f"{self.movie_session.show_time} (row: {self.row}, seat: {self.seat})>"
         )
 
-    def clean(self) -> None:
-        cinema_hall = self.movie_session.cinema_hall
-        if self.row <= 0 or self.row > cinema_hall.rows:
+    def clean(self):
+        if not (1 <= self.row <= self.movie_session.cinema_hall.rows):
             raise ValidationError(
-                {"row": f"row number must be in available range: (1, rows): "
-                        f"(1, {cinema_hall.rows})"}
-            )
-        if self.seat <= 0 or self.seat > cinema_hall.seats_in_row:
-            raise ValidationError(
-                {"seat": f"seat number must be in available range: "
-                         f"(1, seats_in_row): (1, {cinema_hall.seats_in_row})"}
+                {"row": [
+                    "row number must be in available range: "
+                    f"(1, {self.movie_session.cinema_hall.rows})"
+                ]}
             )
 
-    def save(self, *args, **kwargs) -> None:
-        self.full_clean()
-        super().save(*args, **kwargs)
+        if not (1 <= self.seat <= self.movie_session.cinema_hall.seats_in_row):
+            raise ValidationError(
+                {"seat": [
+                    "seat number must be in available range: "
+                    f"(1, {self.movie_session.cinema_hall.seats_in_row})"
+                ]}
+            )

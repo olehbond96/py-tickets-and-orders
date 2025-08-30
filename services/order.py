@@ -1,41 +1,35 @@
-from typing import List, Dict, Any, Optional
+from datetime import datetime
+from typing import List
 from django.db import transaction
-from django.shortcuts import get_object_or_404
-from .user import get_user
-from db.models import Order, Ticket, MovieSession
 from django.db.models import QuerySet
+
+from db.models import Order, Ticket
+from services.user import get_user
+from services.movie_session import get_movie_session
+from services.ticket import get_ticket
+
+
+def get_orders(user_id: int) -> QuerySet[Order]:
+    return Order.objects.filter(user_id=user_id).order_by("-order_date")
 
 
 @transaction.atomic
-def create_order(
-    tickets: List[Dict[str, Any]],
-    username: str,
-    date: Optional[str] = None
-) -> Order:
-    user = get_user(username)
-    order_data = {"user": user}
-    if date:
-        order_data["created_at"] = date
+def create_order(user_id: int, ticket_ids: List[int]) -> Order:
+    user = get_user(user_id)
+    tickets = Ticket.objects.filter(id__in=ticket_ids).select_related(
+        "movie_session"
+    )
 
-    order = Order.objects.create(**order_data)
+    if tickets.count() != len(ticket_ids):
+        raise ValueError("Some tickets were not found.")
 
-    for ticket_data in tickets:
-        movie_session_id = ticket_data.get("movie_session")
-        movie_session = get_object_or_404(MovieSession, pk=movie_session_id)
+    for ticket in tickets:
+        if ticket.order:
+            raise ValueError(f"Ticket {ticket.id} is already ordered.")
 
-        Ticket.objects.create(
-            movie_session=movie_session,
-            order=order,
-            row=ticket_data.get("row"),
-            seat=ticket_data.get("seat")
-        )
+    order = Order.objects.create(user=user, order_date=datetime.now())
 
+    for ticket in tickets:
+        ticket.order = order
+        ticket.save()
     return order
-
-
-def get_orders(username: Optional[str] = None) -> QuerySet[Order]:
-    orders = Order.objects.all()
-    if username:
-        user = get_user(username)
-        orders = orders.filter(user=user)
-    return orders
