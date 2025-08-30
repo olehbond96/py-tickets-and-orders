@@ -14,12 +14,7 @@ def get_orders(username: str = None) -> QuerySet[Order]:
 
 
 @transaction.atomic
-def create_order(
-    tickets: List[dict],
-    username: str,
-    date: Optional[str] = None,
-) -> Order:
-    ...
+def create_order(tickets: List[dict], username: str, date: Optional[str] = None) -> Order:
     user = get_user_by_username(username)
     if date:
         created_at = datetime.fromisoformat(date)
@@ -29,11 +24,13 @@ def create_order(
     order = Order.objects.create(user=user, created_at=created_at)
 
     for ticket_data in tickets:
-        ticket = Ticket.objects.create(
+        ticket = Ticket(
             order=order,
             movie_session_id=ticket_data["movie_session"],
             row=ticket_data["row"],
             seat=ticket_data["seat"],
         )
         ticket.full_clean()
+        ticket.save()
+
     return order

@@ -4,11 +4,7 @@ from django.db.models.query import QuerySet
 from django.db import transaction
 
 
-def get_movies(
-    title: str = None,
-    actors_ids: List[int] = None,
-    genres_ids: List[int] = None,
-) -> QuerySet[Movie]:
+def get_movies(title: str = None, actors_ids: List[int] = None, genres_ids: List[int] = None) -> QuerySet[Movie]:
     queryset = Movie.objects.all()
     if title:
         queryset = queryset.filter(title__icontains=title)
@@ -21,12 +17,12 @@ def get_movies(
 
 @transaction.atomic
 def create_movie(
-    title: str,
-    description: str,
+    movie_title: str,
+    movie_description: str,
     actors_ids: List[int],
     genres_ids: List[int],
 ) -> Movie:
-    movie = Movie.objects.create(title=title, description=description)
+    movie = Movie.objects.create(title=movie_title, description=movie_description)
     movie.actors.set(actors_ids)
     movie.genres.set(genres_ids)
     return movie
