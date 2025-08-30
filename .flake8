@@ -9,5 +9,4 @@ exclude =
     venv
     .venv
     tests
-[flake8]
 exclude = .venv,.venv_new,migrations
