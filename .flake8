@@ -12,4 +12,4 @@ venv
 tests
 pip
 pycache
-
+ignore = Q000
