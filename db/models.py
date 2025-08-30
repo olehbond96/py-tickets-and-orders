@@ -1,9 +1,10 @@
 from django.db import models
-from django.contrib.auth.models import (AbstractUser,
-                                        PermissionsMixin,
-                                        Group,
-                                        Permission
-                                        )
+from django.contrib.auth.models import (
+    AbstractUser,
+    PermissionsMixin,
+    Group,
+    Permission,
+)
 from django.core.exceptions import ValidationError
 
 
@@ -29,7 +30,7 @@ class User(AbstractUser, PermissionsMixin):
         help_text="Specific permissions for this user.",
     )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.username
 
 
@@ -45,7 +46,7 @@ class Movie(models.Model):
             models.Index(fields=["title"]),
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.title
 
 
@@ -53,14 +54,14 @@ class Actor(models.Model):
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.first_name} {self.last_name}"
 
 
 class Genre(models.Model):
     name = models.CharField(max_length=255, unique=True)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
@@ -69,7 +70,7 @@ class CinemaHall(models.Model):
     rows = models.IntegerField()
     seats_in_row = models.IntegerField()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
     @property
@@ -90,7 +91,7 @@ class MovieSession(models.Model):
         related_name="sessions",
     )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.movie.title} at {self.show_time}"
 
 
@@ -102,7 +103,7 @@ class Order(models.Model):
     )
     order_date = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"<Order: {self.order_date.strftime('%Y-%m-%d %H:%M:%S')}>"
 
 
@@ -126,14 +127,14 @@ class Ticket(models.Model):
             )
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
             f"<Ticket: {self.movie_session.movie.title} "
             f"{self.movie_session.show_time} "
             f"(row: {self.row}, seat: {self.seat})>"
         )
 
-    def clean(self):
+    def clean(self) -> None:
         if not (1 <= self.row <= self.movie_session.cinema_hall.rows):
             raise ValidationError(
                 {"row": [

@@ -4,8 +4,6 @@ from django.db import transaction
 from django.db.models import QuerySet
 from db.models import Order, Ticket
 from services.user import get_user
-from services.movie_session import get_movie_session
-from services.ticket import get_ticket
 
 
 def get_orders(user_id: int) -> QuerySet[Order]:
@@ -32,5 +30,4 @@ def create_order(user_id: int, ticket_ids: List[int]) -> Order:
         ticket.order = order
         ticket.save()
     return order
-
 
