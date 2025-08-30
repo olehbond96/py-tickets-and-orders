@@ -1,10 +1,9 @@
 from django.db import models
-from django.contrib.auth.models import (
-    AbstractUser,
-    PermissionsMixin,
-    Group,
-    Permission,
-)
+from django.contrib.auth.models import (AbstractUser,
+                                        PermissionsMixin,
+                                        Group,
+                                        Permission
+                                        )
 from django.core.exceptions import ValidationError
 
 
@@ -101,10 +100,10 @@ class Order(models.Model):
         on_delete=models.CASCADE,
         related_name="orders",
     )
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField()
 
     def __str__(self) -> str:
-        return f"<Order: {self.created_at.strftime('%Y-%m-%d %H:%M:%S')}>"
+        return str(self.created_at)
 
 
 class Ticket(models.Model):
@@ -129,8 +128,7 @@ class Ticket(models.Model):
 
     def __str__(self) -> str:
         return (
-            f"{self.movie_session.movie.title} "
-            f"{self.movie_session.show_time.strftime('%Y-%m-%d %H:%M:%S')} "
+            f"{self.movie_session.movie.title} {self.movie_session.show_time} "
             f"(row: {self.row}, seat: {self.seat})"
         )
 
