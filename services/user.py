@@ -2,6 +2,13 @@ from django.db.models.query import QuerySet
 from db.models import User
 
 
+def get_user_by_username(username: str) -> User:
+    try:
+        return User.objects.get(username=username)
+    except User.DoesNotExist:
+        raise ValueError(f"User with username {username!r} not found")
+
+
 def create_user(
     username: str,
     email: str,
