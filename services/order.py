@@ -15,17 +15,17 @@ def get_orders(username: str = None) -> QuerySet[Order]:
 
 @transaction.atomic
 def create_order(
-        tickets: List[dict],
-        username: str,
-        date: Optional[str] = None
+    tickets: List[dict],
+    username: str,
+    date: Optional[str] = None
 ) -> Order:
     user = get_user_by_username(username)
+
+    order = Order.objects.create(user=user)
+
     if date:
         created_at = datetime.fromisoformat(date)
-    else:
-        created_at = datetime.now()
-
-    order = Order.objects.create(user=user, created_at=created_at)
+        Order.objects.filter(id=order.id).update(created_at=created_at)
 
     for ticket_data in tickets:
         ticket = Ticket(

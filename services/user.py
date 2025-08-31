@@ -11,17 +11,17 @@ def get_user_by_username(username: str) -> User:
 
 def create_user(
     username: str,
-    email: str,
     password: str,
-    first_name: str = None,
-    last_name: str = None,
+    email: str | None = None,
+    first_name: str | None = None,
+    last_name: str | None = None,
 ) -> User:
     return User.objects.create_user(
         username=username,
-        email=email,
+        email=email or "",
         password=password,
-        first_name=first_name,
-        last_name=last_name,
+        first_name=first_name or "",
+        last_name=last_name or "",
     )
 
 

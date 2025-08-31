@@ -1,3 +1,5 @@
+from django.conf import settings
+from datetime import date
 from django.db import models
 from django.contrib.auth.models import (AbstractUser,
                                         PermissionsMixin,
@@ -34,11 +36,11 @@ class User(AbstractUser, PermissionsMixin):
 
 
 class Movie(models.Model):
-    title = models.CharField(max_length=255, unique=True)
+    title = models.CharField(max_length=255, db_index=True)
     description = models.TextField()
     actors = models.ManyToManyField("Actor", related_name="movies")
     genres = models.ManyToManyField("Genre", related_name="movies")
-    release_date = models.DateField(auto_now_add=True)
+    release_date = models.DateField(default=date.today)
 
     class Meta:
         indexes = [
@@ -95,15 +97,18 @@ class MovieSession(models.Model):
 
 
 class Order(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(
-        "User",
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="orders",
+        related_name="orders"
     )
-    created_at = models.DateTimeField()
+
+    class Meta:
+        ordering = ["-created_at"]
 
     def __str__(self) -> str:
-        return str(self.created_at)
+        return self.created_at.strftime("%Y-%m-%d %H:%M:%S")
 
 
 class Ticket(models.Model):
@@ -126,25 +131,30 @@ class Ticket(models.Model):
             )
         ]
 
+    def clean(self):
+        hall = self.movie_session.cinema_hall
+        errors = {}
+        if not (1 <= self.row <= hall.rows):
+            errors["row"] = [
+                f"row number must be in available range:"
+                f" (1, rows): (1, {hall.rows})"
+            ]
+        if not (1 <= self.seat <= hall.seats_in_row):
+            errors["seat"] = [
+                f"seat number must be in available range:"
+                f" (1, seats_in_row): (1, {hall.seats_in_row})"
+            ]
+        if errors:
+            raise ValidationError(errors)
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)
+
+
     def __str__(self) -> str:
         return (
             f"{self.movie_session.movie.title} {self.movie_session.show_time} "
             f"(row: {self.row}, seat: {self.seat})"
         )
 
-    def clean(self) -> None:
-        if not (1 <= self.row <= self.movie_session.cinema_hall.rows):
-            raise ValidationError(
-                {"row": [
-                    "row number must be in available range: "
-                    f"(1, {self.movie_session.cinema_hall.rows})"
-                ]}
-            )
-
-        if not (1 <= self.seat <= self.movie_session.cinema_hall.seats_in_row):
-            raise ValidationError(
-                {"seat": [
-                    "seat number must be in available range: "
-                    f"(1, {self.movie_session.cinema_hall.seats_in_row})"
-                ]}
-            )
