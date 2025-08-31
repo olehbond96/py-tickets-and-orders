@@ -126,8 +126,8 @@ class Ticket(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["movie_session", "row", "seat"],
-                name="unique_ticket_movie_session_row_seat",
+                fields=["row", "seat", "movie_session"],
+                name="unique_ticket_row_seat_movie_session",
             )
         ]
 
@@ -152,7 +152,6 @@ class Ticket(models.Model):
         return super().save(*args, **kwargs)
 
     def __str__(self) -> str:
-        return (
-            f"{self.movie_session.movie.title} {self.movie_session.show_time} "
-            f"(row: {self.row}, seat: {self.seat})"
-        )
+        return (f"{self.movie_session.movie.title}"
+                f" {self.movie_session.show_time}"
+                f" (row: {self.row}, seat: {self.seat})")
