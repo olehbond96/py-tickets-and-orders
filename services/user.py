@@ -28,6 +28,7 @@ def create_user(
         **extra_fields,
     )
 
+
 def get_users() -> QuerySet:
     return get_user_model().objects.all().order_by("username")
 
