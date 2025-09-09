@@ -21,9 +21,9 @@ class CarAdmin(admin.ModelAdmin):
 @admin.register(Driver)
 class DriverAdmin(UserAdmin):
     fieldsets = UserAdmin.fieldsets + (
-        ("Taxi fields", {"fields": ("license_number",)}),
+        ("Additional info", {"fields": ("license_number",)}),
     )
     add_fieldsets = UserAdmin.add_fieldsets + (
-        (None, {"fields": ("license_number",)}),
+        ("Additional info", {"fields": ("license_number",)}),
     )
     list_display = UserAdmin.list_display + ("license_number",)
